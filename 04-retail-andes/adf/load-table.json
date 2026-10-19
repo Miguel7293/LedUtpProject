@@ -1,0 +1,187 @@
+{
+  "concurrency": 1,
+  "parameters": {
+    "schemaName": {
+      "type": "String"
+    },
+    "tableName": {
+      "type": "String"
+    },
+    "runId": {
+      "type": "String"
+    }
+  },
+  "activities": [
+    {
+      "name": "Bounds",
+      "type": "Lookup",
+      "policy": {
+        "timeout": "0.00:15:00",
+        "retry": 2,
+        "retryIntervalInSeconds": 30
+      },
+      "typeProperties": {
+        "firstRowOnly": true,
+        "dataset": {
+          "referenceName": "DS_Sql",
+          "type": "DatasetReference",
+          "parameters": {}
+        },
+        "source": {
+          "type": "AzureSqlSource",
+          "sqlReaderStoredProcedureName": "[etl].[GetBounds]",
+          "storedProcedureParameters": {
+            "SchemaName": {
+              "type": "String",
+              "value": {
+                "value": "@pipeline().parameters.schemaName",
+                "type": "Expression"
+              }
+            },
+            "TableName": {
+              "type": "String",
+              "value": {
+                "value": "@pipeline().parameters.tableName",
+                "type": "Expression"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Copy",
+      "type": "Copy",
+      "dependsOn": [
+        {
+          "activity": "Bounds",
+          "dependencyConditions": [
+            "Succeeded"
+          ]
+        }
+      ],
+      "policy": {
+        "timeout": "0.00:15:00",
+        "retry": 2,
+        "retryIntervalInSeconds": 30
+      },
+      "inputs": [
+        {
+          "referenceName": "DS_Sql",
+          "type": "DatasetReference",
+          "parameters": {
+            "schemaName": {
+              "value": "@pipeline().parameters.schemaName",
+              "type": "Expression"
+            },
+            "tableName": {
+              "value": "@pipeline().parameters.tableName",
+              "type": "Expression"
+            }
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "referenceName": "DS_Bronze",
+          "type": "DatasetReference",
+          "parameters": {
+            "folderPath": {
+              "value": "@concat(pipeline().parameters.schemaName,'/',pipeline().parameters.tableName,'/run_id=',pipeline().parameters.runId)",
+              "type": "Expression"
+            }
+          }
+        }
+      ],
+      "typeProperties": {
+        "source": {
+          "type": "AzureSqlSource",
+          "sqlReaderQuery": {
+            "value": "@if(equals(activity('Bounds').output.firstRow.LoadType,'Full'),concat('SELECT * FROM [',pipeline().parameters.schemaName,'].[',pipeline().parameters.tableName,']'),concat('SELECT * FROM [',pipeline().parameters.schemaName,'].[',pipeline().parameters.tableName,'] WHERE [',activity('Bounds').output.firstRow.WatermarkColumn,'] > CONVERT(datetime2(7),''',activity('Bounds').output.firstRow.LowerWatermark,''',126) AND [',activity('Bounds').output.firstRow.WatermarkColumn,'] <= CONVERT(datetime2(7),''',activity('Bounds').output.firstRow.UpperWatermark,''',126)'))",
+            "type": "Expression"
+          },
+          "queryTimeout": "00:10:00"
+        },
+        "sink": {
+          "type": "ParquetSink",
+          "storeSettings": {
+            "type": "AzureBlobFSWriteSettings"
+          },
+          "formatSettings": {
+            "type": "ParquetWriteSettings"
+          }
+        },
+        "enableStaging": false,
+        "dataIntegrationUnits": 4
+      }
+    },
+    {
+      "name": "Commit",
+      "type": "SqlServerStoredProcedure",
+      "dependsOn": [
+        {
+          "activity": "Copy",
+          "dependencyConditions": [
+            "Succeeded"
+          ]
+        }
+      ],
+      "policy": {
+        "timeout": "0.00:15:00",
+        "retry": 2,
+        "retryIntervalInSeconds": 30
+      },
+      "linkedServiceName": {
+        "referenceName": "LS_Sql",
+        "type": "LinkedServiceReference"
+      },
+      "typeProperties": {
+        "storedProcedureName": "[etl].[CommitLoad]",
+        "storedProcedureParameters": {
+          "SchemaName": {
+            "type": "String",
+            "value": {
+              "value": "@pipeline().parameters.schemaName",
+              "type": "Expression"
+            }
+          },
+          "TableName": {
+            "type": "String",
+            "value": {
+              "value": "@pipeline().parameters.tableName",
+              "type": "Expression"
+            }
+          },
+          "RunId": {
+            "type": "String",
+            "value": {
+              "value": "@pipeline().parameters.runId",
+              "type": "Expression"
+            }
+          },
+          "LowerWatermark": {
+            "type": "String",
+            "value": {
+              "value": "@activity('Bounds').output.firstRow.LowerWatermark",
+              "type": "Expression"
+            }
+          },
+          "UpperWatermark": {
+            "type": "String",
+            "value": {
+              "value": "@activity('Bounds').output.firstRow.UpperWatermark",
+              "type": "Expression"
+            }
+          },
+          "RowsCopied": {
+            "type": "Int64",
+            "value": {
+              "value": "@activity('Copy').output.rowsCopied",
+              "type": "Expression"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

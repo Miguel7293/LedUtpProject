@@ -1,0 +1,7 @@
+[
+ {"id":"ABC-VIA","title":"Explora nuevos destinos","category":"viajes","benefit":"Acceso al catálogo ficticio de experiencias de viaje","terms":"Campaña ficticia. Consulta disponibilidad y condiciones. No incluye descuentos ni crédito.","start":"2026-01-01","end":"2027-12-31"},
+ {"id":"ABC-GAS","title":"Sabores por descubrir","category":"gastronomia","benefit":"Acceso al catálogo ficticio de experiencias gastronómicas","terms":"Campaña ficticia. Consulta disponibilidad y condiciones. No incluye descuentos ni crédito.","start":"2026-01-01","end":"2027-12-31"},
+ {"id":"ABC-EDU","title":"Aprende algo nuevo","category":"educacion","benefit":"Acceso al catálogo ficticio de cursos","terms":"Campaña ficticia. Consulta disponibilidad y condiciones. No incluye descuentos ni crédito.","start":"2026-01-01","end":"2027-12-31"},
+ {"id":"ABC-TEC","title":"Ideas para tu día","category":"tecnologia","benefit":"Acceso al catálogo ficticio de experiencias tecnológicas","terms":"Campaña ficticia. Consulta disponibilidad y condiciones. No incluye descuentos ni crédito.","start":"2026-01-01","end":"2027-12-31"},
+ {"id":"ABC-OLD","title":"Campaña vencida","category":"viajes","benefit":"No publicar","terms":"Vencida.","start":"2025-01-01","end":"2025-12-31"}
+]

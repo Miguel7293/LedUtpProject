@@ -1,0 +1,10 @@
+node_modules
+.local
+.git
+.env*
+coverage
+README.md
+RESULTADO.md
+infra
+scripts
+azure-pipelines.yml

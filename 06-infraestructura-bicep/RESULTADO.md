@@ -31,3 +31,12 @@
 - What-if muestra diferencias de valores predeterminados/referencias dinámicas de Azure y una asignación AcrPull no analizable antes de resolver principalId. No se declara un diff vacío.
 - Saldo y fecha de expiración de Azure for Students todavía sin verificar.
 - Retirar al finalizar el laboratorio: grupo 06, asignaciones de sus identidades en ACR/suscripción, federación y rol propio si ya no se usa. No eliminar el ACR compartido del proyecto 02.
+
+## Cierre del monitoreo (19 de octubre de 2026)
+
+- Despliegue `observability-completion`: Succeeded. Imagen propia `leadutp06-api`, digest `sha256:09e04ef06c4e0a306b839234a84b7942adcff46f27b8e7744f7c82be775d1e7b`, fijado en Bicep.
+- API con OpenTelemetry y autenticación ManagedIdentityCredential: lee `catalog-label` de Key Vault al iniciar. El valor es una etiqueta sintética educativa. `/health` confirmó `key_vault_loaded: true`; no devuelve secretos.
+- `Inspect-Logs.ps1`: `LOG_ANALYTICS_06_TEST_PASS`, nueve eventos del nombre de aplicación esperado en la comprobación registrada.
+- `Inspect-Telemetry.ps1`: `APP_INSIGHTS_06_TEST_PASS`, con 17 AppRequests, una AppTrace y diez registros de consola en una consulta posterior. Los conteos cambian con el tráfico y la propagación.
+- Quedan resueltas las limitaciones anteriores de recepción de eventos, falta de instrumentación y falta de lectura de Key Vault. Los apartados previos se conservan como evidencia histórica del primer despliegue.
+- [Actions 39213075970](https://github.com/Miguel7293/LedUtpProject/actions/runs/39213075970): success, código ac31d9f. Despliegue manual real desde GitHub con imagen fijada, configuración Key Vault y OpenTelemetry. Validación automática 39213063175 también aprobada.

@@ -1,0 +1,27 @@
+# Secretos y configuración privada
+.env
+.env.*
+!.env.example
+*.local.json
+*.local.bicepparam
+*.pfx
+*.pem
+*.key
+.azure/
+.tools/
+.local/
+
+# Dependencias y resultados locales
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+bin/
+obj/
+dist/
+coverage/
+artifacts/
+*.log
+.DS_Store

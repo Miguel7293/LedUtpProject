@@ -1,0 +1,12 @@
+const { SYSTEM_ACCESSTOKEN: token, SYSTEM_COLLECTIONURI: organization, SYSTEM_TEAMPROJECTID: project, BUILD_REPOSITORY_ID: repository, SYSTEM_DEFINITIONID: pipeline, BUILD_REPOSITORY_PROVIDER: provider } = process.env;
+if (!token || !organization || !project || !repository || !pipeline) throw new Error('Falta contexto de Azure Pipelines y System.AccessToken.');
+if (provider !== 'TfsGit') throw new Error('Este laboratorio verifica Branch Policies de Azure Repos Git. Importar la carpeta al repositorio de Azure DevOps.');
+const response = await fetch(`${organization}${project}/_apis/policy/configurations?api-version=7.1`, { headers: { Authorization: `Bearer ${token}` } });
+if (!response.ok) throw new Error(`No se pudieron consultar las políticas: HTTP ${response.status}`);
+const { value } = await response.json();
+const policies = value.filter((policy) => policy.isEnabled && policy.isBlocking && policy.settings?.scope?.some((scope) => (!scope.repositoryId || scope.repositoryId === repository) && scope.refName === 'refs/heads/main' && scope.matchKind === 'Exact'));
+const review = policies.find((policy) => policy.settings.minimumApproverCount >= 1);
+const build = policies.find((policy) => policy.settings.buildDefinitionId === Number(pipeline));
+if (!review || !build) throw new Error('main debe tener revisión obligatoria y Build Validation bloqueante asociada a este pipeline. Configurarlas en Repos > Branches > main > Branch policies.');
+console.log(`POLICIES_PASS: políticas reales de revisión ${review.id} y build ${build.id}.`);
+if (review.settings.creatorVoteCounts) console.log('Aviso: el autor puede aprobar su PR; útil solo en un laboratorio individual.');

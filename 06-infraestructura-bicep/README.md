@@ -1,6 +1,6 @@
 # Proyecto 06: infraestructura como código
 
-Este laboratorio despliega su propio grupo `rg-leadutp-06-dev` en Brazil South. Reutiliza el ACR y la imagen de API del proyecto 02; ese proyecto debe conservarse.
+Este laboratorio despliega su propio grupo `rg-leadutp-06-dev` en Brazil South. Reutiliza el ACR del proyecto 02 y publica su propia imagen instrumentada; el registro compartido debe conservarse.
 
 ## Componentes
 
@@ -11,7 +11,7 @@ Este laboratorio despliega su propio grupo `rg-leadutp-06-dev` en Brazil South. 
 - Container Apps con HTTPS, extracción de imagen mediante identidad/AcrPull, 0–1 réplicas y logs al workspace.
 - Presupuesto mensual de 10 unidades de la moneda de facturación, avisos al 80% y 100% al correo autorizado.
 
-La imagen reutilizada no tiene instrumentación de Application Insights ni consume secretos de Key Vault. La infraestructura deja ambos componentes preparados; no se afirma una prueba de trazas ni de lectura de secretos desde esta API.
+La imagen de `api/` incorpora OpenTelemetry para Application Insights y lee una etiqueta sintética de Key Vault mediante identidad administrada al iniciar. Se verificó recepción real de solicitudes, trazas y registros de consola. La imagen está fijada por digest en Bicep. Las evidencias históricas y finales están en RESULTADO.md.
 
 ## Uso desde la raíz LeadUTP
 
@@ -24,6 +24,8 @@ La imagen reutilizada no tiene instrumentación de Application Insights ni consu
 ./06-infraestructura-bicep/scripts/Test-Azure.ps1
 # Consultar logs reales (pueden tardar varios minutos en aparecer)
 ./06-infraestructura-bicep/scripts/Inspect-Logs.ps1
+# Comprobar solicitudes y trazas de la API instrumentada
+./06-infraestructura-bicep/scripts/Inspect-Telemetry.ps1
 ```
 
 `-PublishModules` es solo para la publicación inicial. No se sobrescriben versiones existentes: al cambiar un módulo, incrementar la versión en el script y en `infra/platform.bicep`. El ACR conserva las fuentes para revisión. La compilación restaura módulos usando la sesión Azure actual.

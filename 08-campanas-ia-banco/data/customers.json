@@ -1,0 +1,5 @@
+[
+  {"id":"demo-001","dni_demo":"FICTICIO-001","age_band":"35-44","marital_status_demo":"casado","children_demo":2,"interests":["viajes","gastronomia"],"spend":{"viajes":650,"gastronomia":320,"educacion":120},"marketing_consent":true},
+  {"id":"demo-002","dni_demo":"FICTICIO-002","age_band":"18-24","marital_status_demo":"soltero","children_demo":0,"interests":["educacion","tecnologia"],"spend":{"educacion":450,"tecnologia":300,"gastronomia":80},"marketing_consent":true},
+  {"id":"demo-sin-consentimiento","interests":["viajes"],"spend":{"viajes":500},"marketing_consent":false}
+]

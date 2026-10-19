@@ -1,0 +1,295 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultUri": {
+      "type": "String"
+    },
+    "reportUri": {
+      "type": "String"
+    },
+    "metricsUri": {
+      "type": "String"
+    },
+    "firstScheduledRun": {
+      "type": "String"
+    }
+  },
+  "triggers": {
+    "Daily": {
+      "type": "Recurrence",
+      "recurrence": {
+        "frequency": "Day",
+        "interval": 1,
+        "timeZone": "SA Pacific Standard Time",
+        "startTime": "@parameters('firstScheduledRun')",
+        "schedule": {
+          "hours": [
+            8
+          ],
+          "minutes": [
+            0
+          ]
+        }
+      }
+    }
+  },
+  "actions": {
+    "Initialize": {
+      "type": "InitializeVariable",
+      "inputs": {
+        "variables": [
+          {
+            "name": "NextUrl",
+            "type": "string",
+            "value": ""
+          },
+          {
+            "name": "Report",
+            "type": "array",
+            "value": []
+          }
+        ]
+      }
+    },
+    "Kinds": {
+      "type": "Foreach",
+      "foreach": [
+        "secrets",
+        "certificates",
+        "keys"
+      ],
+      "runAfter": {
+        "Initialize": [
+          "Succeeded"
+        ]
+      },
+      "runtimeConfiguration": {
+        "concurrency": {
+          "repetitions": 1
+        }
+      },
+      "actions": {
+        "First_page": {
+          "type": "SetVariable",
+          "inputs": {
+            "name": "NextUrl",
+            "value": "@concat(parameters('vaultUri'),items('Kinds'),'?api-version=7.4&maxresults=25')"
+          }
+        },
+        "Pages": {
+          "type": "Until",
+          "expression": "@empty(variables('NextUrl'))",
+          "limit": {
+            "count": 100,
+            "timeout": "PT10M"
+          },
+          "runAfter": {
+            "First_page": [
+              "Succeeded"
+            ]
+          },
+          "actions": {
+            "List_page": {
+              "type": "Http",
+              "inputs": {
+                "uri": "@variables('NextUrl')",
+                "method": "GET",
+                "authentication": {
+                  "type": "ManagedServiceIdentity",
+                  "audience": "https://vault.azure.net"
+                }
+              }
+            },
+            "Collect_page": {
+              "type": "Foreach",
+              "foreach": "@body('List_page')?['value']",
+              "runAfter": {
+                "List_page": [
+                  "Succeeded"
+                ]
+              },
+              "runtimeConfiguration": {
+                "concurrency": {
+                  "repetitions": 1
+                }
+              },
+              "actions": {
+                "Expiring": {
+                  "type": "If",
+                  "expression": "@and(not(equals(item()?['managed'],true)),not(equals(item()?['attributes']?['exp'],null)),not(equals(item()?['attributes']?['enabled'],false)),lessOrEquals(int(coalesce(item()?['attributes']?['exp'],4102444800)),div(sub(ticks(addDays(utcNow(),30)),ticks('1970-01-01T00:00:00Z')),10000000)))",
+                  "actions": {
+                    "Collect": {
+                      "type": "AppendToArrayVariable",
+                      "inputs": {
+                        "name": "Report",
+                        "value": {
+                          "kind": "@items('Kinds')",
+                          "id": "@coalesce(item()?['id'],item()?['kid'])",
+                          "expiresAt": "@addSeconds('1970-01-01T00:00:00Z',int(item()['attributes']['exp']))",
+                          "daysRemaining": "@div(sub(int(item()['attributes']['exp']),div(sub(ticks(utcNow()),ticks('1970-01-01T00:00:00Z')),10000000)),86400.0)"
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "actions": {}
+                  }
+                }
+              }
+            },
+            "Next_page": {
+              "type": "SetVariable",
+              "runAfter": {
+                "Collect_page": [
+                  "Succeeded"
+                ]
+              },
+              "inputs": {
+                "name": "NextUrl",
+                "value": "@coalesce(body('List_page')?['nextLink'],'')"
+              }
+            }
+          }
+        }
+      }
+    },
+    "Due15": {
+      "type": "Query",
+      "runAfter": {
+        "Kinds": [
+          "Succeeded"
+        ]
+      },
+      "inputs": {
+        "from": "@variables('Report')",
+        "where": "@lessOrEquals(item()['daysRemaining'],15)"
+      }
+    },
+    "Due30": {
+      "type": "Query",
+      "runAfter": {
+        "Due15": [
+          "Succeeded"
+        ]
+      },
+      "inputs": {
+        "from": "@variables('Report')",
+        "where": "@and(greater(item()['daysRemaining'],15),lessOrEquals(item()['daysRemaining'],30))"
+      }
+    },
+    "Save_report": {
+      "type": "Http",
+      "inputs": {
+        "uri": "@parameters('reportUri')",
+        "method": "PUT",
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://storage.azure.com/"
+        },
+        "body": {
+          "checkedAt": "@utcNow()",
+          "runId": "@workflow().run.name",
+          "items": "@variables('Report')",
+          "due15": "@length(body('Due15'))",
+          "due30": "@length(body('Due30'))"
+        },
+        "headers": {
+          "x-ms-version": "2023-11-03",
+          "x-ms-blob-type": "BlockBlob",
+          "Content-Type": "application/json"
+        }
+      },
+      "runAfter": {
+        "Due30": [
+          "Succeeded"
+        ]
+      }
+    },
+    "Publish15": {
+      "type": "Http",
+      "inputs": {
+        "uri": "@parameters('metricsUri')",
+        "method": "POST",
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://monitoring.azure.com/"
+        },
+        "body": {
+          "time": "@utcNow()",
+          "data": {
+            "baseData": {
+              "metric": "Due15Days",
+              "namespace": "LeadUTP.KeyVault",
+              "dimNames": [],
+              "series": [
+                {
+                  "dimValues": [],
+                  "min": "@length(body('Due15'))",
+                  "max": "@length(body('Due15'))",
+                  "sum": "@length(body('Due15'))",
+                  "count": 1
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "runAfter": {
+        "Save_report": [
+          "Succeeded"
+        ]
+      }
+    },
+    "Publish30": {
+      "type": "Http",
+      "inputs": {
+        "uri": "@parameters('metricsUri')",
+        "method": "POST",
+        "authentication": {
+          "type": "ManagedServiceIdentity",
+          "audience": "https://monitoring.azure.com/"
+        },
+        "body": {
+          "time": "@utcNow()",
+          "data": {
+            "baseData": {
+              "metric": "Due30Days",
+              "namespace": "LeadUTP.KeyVault",
+              "dimNames": [],
+              "series": [
+                {
+                  "dimValues": [],
+                  "min": "@length(body('Due30'))",
+                  "max": "@length(body('Due30'))",
+                  "sum": "@length(body('Due30'))",
+                  "count": 1
+                }
+              ]
+            }
+          }
+        },
+        "headers": {
+          "Content-Type": "application/json"
+        }
+      },
+      "runAfter": {
+        "Save_report": [
+          "Succeeded"
+        ]
+      }
+    }
+  },
+  "outputs": {
+    "summary": {
+      "type": "Object",
+      "value": {
+        "due15": "@length(body('Due15'))",
+        "due30": "@length(body('Due30'))"
+      }
+    }
+  }
+}
