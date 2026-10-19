@@ -18,7 +18,9 @@ $local = "$PSScriptRoot/../.local"
 New-Item -ItemType Directory -Force $local | Out-Null
 az identity create -g $group -n id-lead06-github --location brazilsouth -o none; Check 'identidad GitHub'
 $identity = az identity show -g $group -n id-lead06-github -o json | ConvertFrom-Json; Check 'consultar identidad'
-az identity federated-credential create -g $group --identity-name id-lead06-github -n github-azure-lab --issuer https://token.actions.githubusercontent.com --subject "repo:${Repository}:environment:azure-lab" --audiences api://AzureADTokenExchange -o none; Check 'federación OIDC'
+$repoInfo = & $gh api "repos/$Repository" | ConvertFrom-Json; Check 'identificadores del repositorio'
+$subject = "repo:$($repoInfo.owner.login)@$($repoInfo.owner.id)/$($repoInfo.name)@$($repoInfo.id):environment:azure-lab"
+az identity federated-credential create -g $group --identity-name id-lead06-github -n github-azure-lab --issuer https://token.actions.githubusercontent.com --subject $subject --audiences api://AzureADTokenExchange -o none; Check 'federación OIDC'
 $roleName = 'LeadUTP06 Subscription Deployment'
 @{ Name=$roleName; IsCustom=$true; Description='Operaciones de despliegue ARM; no concede permisos sobre recursos de otros grupos.'; Actions=@('Microsoft.Resources/deployments/*'); NotActions=@(); AssignableScopes=@($scope) } | ConvertTo-Json -Depth 5 | Set-Content "$local/deployment-role.json"
 $roles = az role definition list --name $roleName -o json | ConvertFrom-Json; Check 'buscar rol'
@@ -42,7 +44,8 @@ foreach ($branch in @('main','codex/infraestructura-06')) {
         & $gh api --method POST "repos/$Repository/environments/azure-lab/deployment-branch-policies" -f "name=$branch" -f type=branch --silent; Check 'rama autorizada'
     }
 }
-foreach ($entry in @{AZURE_CLIENT_ID=$identity.clientId; AZURE_TENANT_ID=$account.tenantId; AZURE_SUBSCRIPTION_ID=$sub; AZURE_ALERT_EMAIL=$ContactEmail}.GetEnumerator()) {
+foreach ($entry in @{AZURE_CLIENT_ID=$identity.clientId; AZURE_TENANT_ID=$account.tenantId; AZURE_SUBSCRIPTION_ID=$sub}.GetEnumerator()) {
     & $gh variable set $entry.Key --repo $Repository --env azure-lab --body $entry.Value; Check "variable $($entry.Key)"
 }
+& $gh secret set AZURE_ALERT_EMAIL --repo $Repository --env azure-lab --body $ContactEmail; Check 'destinatario protegido'
 Write-Host 'GITHUB_OIDC_READY: federación sin secretos y permisos limitados al laboratorio/ACR, más operaciones ARM de suscripción.'

@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: azure-lab
     env:
-      AZURE_ALERT_EMAIL: ${{ vars.AZURE_ALERT_EMAIL }}
+      AZURE_ALERT_EMAIL: ${{ secrets.AZURE_ALERT_EMAIL }}
     defaults:
       run:
         working-directory: 06-infraestructura-bicep
