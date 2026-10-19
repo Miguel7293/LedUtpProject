@@ -1,0 +1,121 @@
+# Pipeline para un repositorio Azure Repos con la carpeta 07-hero-agency en su raíz.
+trigger:
+  branches:
+    include: [main]
+  paths:
+    include: [07-hero-agency/*]
+parameters:
+  - name: deploy
+    displayName: Desplegar staging y producción después de validar
+    type: boolean
+    default: false
+  - name: azureServiceConnection
+    type: string
+    default: sc-hero07-deploy
+pool:
+  vmImage: ubuntu-24.04
+variables:
+  registry: acrleadutpjmas5j6rizpu4.azurecr.io
+  resourceGroup: rg-leadutp-07-dev
+stages:
+  - stage: Build
+    jobs:
+      - job: BuildImages
+        steps:
+          - checkout: self
+          - bash: |
+              set -euo pipefail
+              docker build --target runtime -t hero-agency:$(Build.BuildId) .
+              docker build --target test -t hero-agency-test:$(Build.BuildId) .
+              docker save hero-agency:$(Build.BuildId) hero-agency-test:$(Build.BuildId) -o $(Build.ArtifactStagingDirectory)/hero-images.tar
+            workingDirectory: $(Build.SourcesDirectory)/07-hero-agency
+            displayName: Construir imágenes reproducibles
+          - publish: $(Build.ArtifactStagingDirectory)/hero-images.tar
+            artifact: images
+  - stage: Test
+    dependsOn: Build
+    jobs:
+      - job: UnitTests
+        steps:
+          - checkout: none
+          - download: current
+            artifact: images
+          - bash: |
+              set -euo pipefail
+              docker load -i $(Pipeline.Workspace)/images/hero-images.tar
+              docker run --rm hero-agency-test:$(Build.BuildId)
+            displayName: Probar votos, concurrencia, validación y fallos de almacenamiento
+  - stage: Policies
+    dependsOn: Test
+    jobs:
+      - job: VerifyPolicies
+        steps:
+          - checkout: self
+          - task: UseNode@1
+            inputs:
+              version: '24.x'
+          - bash: node 07-hero-agency/scripts/check-policies.mjs
+            displayName: Consultar políticas obligatorias reales de main
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+  - stage: Staging
+    dependsOn: Policies
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ${{ eq(parameters.deploy, true) }})
+    jobs:
+      - deployment: DeployStaging
+        environment: hero-staging
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: images
+                - task: AzureCLI@2
+                  displayName: Publicar imagen probada y desplegar staging
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      docker load -i $(Pipeline.Workspace)/images/hero-images.tar
+                      az acr login -n acrleadutpjmas5j6rizpu4
+                      docker tag hero-agency:$(Build.BuildId) $(registry)/hero-agency:$(Build.BuildId)
+                      docker push $(registry)/hero-agency:$(Build.BuildId)
+                      digest=$(az acr repository show -n acrleadutpjmas5j6rizpu4 --image hero-agency:$(Build.BuildId) --query digest -o tsv)
+                      image="$(registry)/hero-agency@$digest"
+                      az containerapp update -g $(resourceGroup) -n ca-hero07-staging --image "$image" -o none
+                      url="https://$(az containerapp show -g $(resourceGroup) -n ca-hero07-staging --query properties.configuration.ingress.fqdn -o tsv)"
+                      docker run --rm --mount type=bind,source=$(Build.SourcesDirectory)/07-hero-agency/scripts/smoke.mjs,target=/smoke.mjs,readonly node:24-bookworm-slim node /smoke.mjs "$url"
+                      mkdir -p $(Pipeline.Workspace)/release
+                      printf '%s' "$image" > $(Pipeline.Workspace)/release/image.txt
+                - publish: $(Pipeline.Workspace)/release
+                  artifact: release
+  - stage: Production
+    dependsOn: Staging
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), ${{ eq(parameters.deploy, true) }})
+    jobs:
+      - deployment: DeployProduction
+        # La aprobación se configura fuera del YAML, en el environment hero-production.
+        environment: hero-production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - download: current
+                  artifact: release
+                - task: AzureCLI@2
+                  displayName: Promover el mismo digest y verificar disponibilidad
+                  inputs:
+                    azureSubscription: ${{ parameters.azureServiceConnection }}
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -euo pipefail
+                      image=$(cat $(Pipeline.Workspace)/release/image.txt)
+                      [[ "$image" =~ ^acrleadutpjmas5j6rizpu4.azurecr.io/hero-agency@sha256:[a-f0-9]{64}$ ]]
+                      az containerapp update -g $(resourceGroup) -n ca-hero07-production --image "$image" -o none
+                      url="https://$(az containerapp show -g $(resourceGroup) -n ca-hero07-production --query properties.configuration.ingress.fqdn -o tsv)"
+                      docker run --rm --mount type=bind,source=$(Build.SourcesDirectory)/07-hero-agency/scripts/smoke.mjs,target=/smoke.mjs,readonly node:24-bookworm-slim node /smoke.mjs "$url"

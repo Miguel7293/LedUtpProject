@@ -1,0 +1,87 @@
+{
+  "concurrency": 1,
+  "parameters": {
+    "onlyTable": {
+      "type": "String",
+      "defaultValue": ""
+    }
+  },
+  "activities": [
+    {
+      "name": "Metadata",
+      "type": "Lookup",
+      "policy": {
+        "timeout": "0.00:15:00",
+        "retry": 2,
+        "retryIntervalInSeconds": 30
+      },
+      "typeProperties": {
+        "dataset": {
+          "referenceName": "DS_Sql",
+          "type": "DatasetReference",
+          "parameters": {}
+        },
+        "firstRowOnly": false,
+        "source": {
+          "type": "AzureSqlSource",
+          "sqlReaderStoredProcedureName": "[etl].[ListLoads]",
+          "storedProcedureParameters": {
+            "OnlyTable": {
+              "type": "String",
+              "value": {
+                "value": "@pipeline().parameters.onlyTable",
+                "type": "Expression"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Tables",
+      "type": "ForEach",
+      "dependsOn": [
+        {
+          "activity": "Metadata",
+          "dependencyConditions": [
+            "Succeeded"
+          ]
+        }
+      ],
+      "typeProperties": {
+        "items": {
+          "value": "@activity('Metadata').output.value",
+          "type": "Expression"
+        },
+        "isSequential": true,
+        "activities": [
+          {
+            "name": "Load",
+            "type": "ExecutePipeline",
+            "typeProperties": {
+              "pipeline": {
+                "referenceName": "LoadTable",
+                "type": "PipelineReference"
+              },
+              "waitOnCompletion": true,
+              "parameters": {
+                "schemaName": {
+                  "value": "@item().SchemaName",
+                  "type": "Expression"
+                },
+                "tableName": {
+                  "value": "@item().TableName",
+                  "type": "Expression"
+                },
+                "runId": {
+                  "value": "@pipeline().RunId",
+                  "type": "Expression"
+                }
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

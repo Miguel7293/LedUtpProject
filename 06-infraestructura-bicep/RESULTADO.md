@@ -1,0 +1,48 @@
+# Evidencias del proyecto 06
+
+## Retiro de recursos de Azure — 19 de octubre de 2026
+
+El propietario autorizó eliminar los recursos de Azure de este laboratorio para detener futuros cargos. Se verificó la eliminación de su grupo de recursos y de todos los recursos del laboratorio; las pruebas y direcciones descritas abajo documentan el funcionamiento anterior y no garantizan que los servicios sigan disponibles. Se conservan código, infraestructura y evidencias. Los despliegues de GitHub Actions y Azure Pipelines se deshabilitaron para impedir la recreación automática.
+
+Los respaldos de archivos y datos de demostración se guardan únicamente en `.local/retirada-2026-10-19/` en la raíz del workspace, excluida de Git. No es un respaldo completo de máquinas, imágenes o base SQL: se conservan scripts de inicialización, datos Bronze/Silver, documentos, reportes y votos de demostración. Las contraseñas, secretos e identidades administradas no se restauran desde esos respaldos. Para volver a publicar, revisar los scripts y los costos antes de desplegar.
+
+## Infraestructura
+
+- Grupo independiente: `rg-leadutp-06-dev`, Brazil South.
+- API: https://ca-lead06-api.kindwave-4a2cdf0a.brazilsouth.azurecontainerapps.io
+- Recursos: `log-lead06`, `appi-lead06`, `kv-lead06-rs67koo3gr6tg`, `id-lead06`, `cae-lead06`, `ca-lead06-api`.
+- Módulos propios con fuentes en ACR: `bicep/leadutp/observability:1.0.2` y `bicep/leadutp/security:1.0.0`. Versiones previas conservadas sin sobrescribir.
+- AVM Log Analytics `0.11.1`, retención 30 días y cuota de ingesta 1 GB/día.
+- Despliegue local `leadutp-06`: Succeeded. Test-Azure.ps1: BICEP_06_TEST_PASS (HTTP 200, managed identity, minReplicas=0, límites de logs y destino correcto).
+- Catálogo real de la API verificado: tres productos ficticios, moneda PEN, entorno azure-bicep-06.
+- Presupuesto `budget-leadutp-06`: mensual 10 unidades de la moneda de facturación, avisos 80/100%; no detiene recursos.
+
+## GitHub
+
+- Repositorio: [Miguel7293/LedUtpProject](https://github.com/Miguel7293/LedUtpProject).
+- Rama `codex/infraestructura-06` publicada; [PR #1](https://github.com/Miguel7293/LedUtpProject/pull/1) en borrador, sin fusionar main.
+- GitHub CLI autenticado; identidad Azure `id-lead06-github` con federación OIDC para el environment azure-lab.
+- Client ID: `28840f10-1b88-49cc-beb2-a16d25b37017` (identificador público, no credencial).
+- El subject usa los IDs inmutables reales del repositorio/propietario. Se corrigió la primera ejecución que esperaba el formato antiguo.
+- Environment restringido a main y codex/infraestructura-06; sin revisores automáticos. Variables de identidad y suscripción; destinatario de alertas como secreto AZURE_ALERT_EMAIL.
+- [Validación Actions 39192558401](https://github.com/Miguel7293/LedUtpProject/actions/runs/39192558401): success. Login OIDC, restauración de módulos privados, compilación y what-if aprobados.
+- [Despliegue manual Actions 39192677684](https://github.com/Miguel7293/LedUtpProject/actions/runs/39192677684): success con deploy=true: login OIDC, módulos privados, compilación, what-if, despliegue y Test-Azure.ps1 aprobados. Código validado en commit 1fe3692; los cambios posteriores son documentación.
+
+## Límites y pendientes
+
+- La última consulta a Log Analytics no encontró tablas: la recepción efectiva de logs sigue sin confirmarse. Test-Azure verifica configuración, no recepción de eventos.
+- Express rechazó azure-monitor como destino. La integración Log Analytics usa clave del workspace y requiere disableLocalAuth=false en este laboratorio; ARM resuelve la clave sin exportarla.
+- Application Insights y Key Vault están aprovisionados; la imagen de API no tiene instrumentación de trazas ni consume secretos. No se afirma haber probado esas integraciones de aplicación.
+- La imagen reutiliza la etiqueta v1 del proyecto 02; fijar digest para producción.
+- What-if muestra diferencias de valores predeterminados/referencias dinámicas de Azure y una asignación AcrPull no analizable antes de resolver principalId. No se declara un diff vacío.
+- Saldo y fecha de expiración de Azure for Students todavía sin verificar.
+- Retirar al finalizar el laboratorio: grupo 06, asignaciones de sus identidades en ACR/suscripción, federación y rol propio si ya no se usa. No eliminar el ACR compartido del proyecto 02.
+
+## Cierre del monitoreo (19 de octubre de 2026)
+
+- Despliegue `observability-completion`: Succeeded. Imagen propia `leadutp06-api`, digest `sha256:09e04ef06c4e0a306b839234a84b7942adcff46f27b8e7744f7c82be775d1e7b`, fijado en Bicep.
+- API con OpenTelemetry y autenticación ManagedIdentityCredential: lee `catalog-label` de Key Vault al iniciar. El valor es una etiqueta sintética educativa. `/health` confirmó `key_vault_loaded: true`; no devuelve secretos.
+- `Inspect-Logs.ps1`: `LOG_ANALYTICS_06_TEST_PASS`, nueve eventos del nombre de aplicación esperado en la comprobación registrada.
+- `Inspect-Telemetry.ps1`: `APP_INSIGHTS_06_TEST_PASS`, con 17 AppRequests, una AppTrace y diez registros de consola en una consulta posterior. Los conteos cambian con el tráfico y la propagación.
+- Quedan resueltas las limitaciones anteriores de recepción de eventos, falta de instrumentación y falta de lectura de Key Vault. Los apartados previos se conservan como evidencia histórica del primer despliegue.
+- [Actions 39213075970](https://github.com/Miguel7293/LedUtpProject/actions/runs/39213075970): success, código ac31d9f. Despliegue manual real desde GitHub con imagen fijada, configuración Key Vault y OpenTelemetry. Validación automática 39213063175 también aprobada.

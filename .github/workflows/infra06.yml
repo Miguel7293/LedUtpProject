@@ -1,0 +1,46 @@
+name: Infraestructura Bicep 06
+on:
+  push:
+    branches: [main, codex/infraestructura-06]
+    paths: ['06-infraestructura-bicep/infra/**', '06-infraestructura-bicep/scripts/**', '.github/workflows/infra06.yml']
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Aplicar infraestructura después de revisar what-if
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: leadutp-06-infrastructure
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    environment: azure-lab
+    env:
+      AZURE_ALERT_EMAIL: ${{ secrets.AZURE_ALERT_EMAIL }}
+    defaults:
+      run:
+        working-directory: 06-infraestructura-bicep
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Restaurar y compilar módulos privados
+        run: az bicep build --file infra/main.bicep --stdout > /dev/null
+      - name: Revisar cambios
+        shell: pwsh
+        run: ./scripts/Deploy.ps1
+      - name: Desplegar
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy
+        shell: pwsh
+        run: ./scripts/Deploy.ps1 -Deploy
+      - name: Verificar
+        if: github.event_name == 'workflow_dispatch' && inputs.deploy
+        shell: pwsh
+        run: ./scripts/Test-Azure.ps1

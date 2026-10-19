@@ -1,0 +1,7 @@
+.venv/
+.local/
+.env
+*.pfx
+*.pem
+*.key
+__pycache__/

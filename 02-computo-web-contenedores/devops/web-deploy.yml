@@ -1,0 +1,30 @@
+# Copiar a .github/workflows/leadutp02-web.yml cuando se conecte el repositorio.
+# Configurar variables AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID y AZURE_WEBAPP_NAME.
+# La aplicación federada de Entra necesita permisos limitados al grupo rg-leadutp-02-dev.
+name: LEAD UTP 02 web
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['02-computo-web-contenedores/web/**']
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet publish 02-computo-web-contenedores/web -c Release -o publish
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: publish
