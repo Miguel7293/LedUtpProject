@@ -1,5 +1,17 @@
 # Identidades, Key Vault y monitoreo
 
+## Descripción de lo realizado
+
+**Objetivo:** conceder permisos mínimos, acceder a datos sin claves y detectar vencimientos.
+
+Se crearon grupos de Entra con Reader, Contributor y Owner limitados al grupo del laboratorio, además de un usuario lector deshabilitado. Se preparó un Key Vault con secretos, llaves y certificado sintéticos con diferentes fechas de expiración.
+
+VM01 del proyecto 03 recibió una identidad administrada y permiso de lectura sobre un contenedor privado. La VM descargó el PDF y verificó su hash; un intento de escritura fue rechazado con 403.
+
+Una Logic App consulta vencimientos diariamente a las 08:00 de Lima, guarda un reporte y publica métricas. Azure Monitor activó dos alertas para objetos a 15 y 30 días. El usuario informó que no recibió los correos: destinatario y enlaces están configurados, pero la API de prueba rechazó la oferta Students. La verificación del correo y la entrega real siguen pendientes. Authenticator fue confirmado por el usuario; eso no demuestra una auditoría de todas las políticas MFA del tenant.
+
+**Uso:** `05-identidades-keyvault-monitoreo/scripts/Inspect-Monitor.ps1` y `Test-Monitor.ps1`. Los correos no son mensajes diarios individuales por secreto: las alertas son agregadas y con estado.
+
 ## Resultado
 
 Laboratorio de Entra ID, RBAC, Key Vault, identidad administrada de VM y auditoría de vencimientos con Logic Apps y Azure Monitor. Consultar `RESULTADO.md` para evidencias y estado final.

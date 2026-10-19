@@ -1,5 +1,19 @@
 # Retail Andes
 
+## Descripción de lo realizado
+
+**Objetivo:** convertir datos operacionales en un lago de datos con cargas controladas y una capa Silver.
+
+Azure SQL contiene clientes, productos y ventas sintéticas. ADF consulta una tabla de metadatos con Lookup, recorre las cargas con ForEach y ejecuta Copy. Las tablas completas se extraen de nuevo; las incrementales usan una ventana de watermark. Solo una copia exitosa permite confirmar el nuevo checkpoint y registrar su historial.
+
+Bronze almacena Parquet por tabla y run ID. Las ejecuciones verificadas copiaron 3 ventas inicialmente, 2 tras los cambios y 0 al repetir sin cambios. PySpark consolidó cuatro ventas por PEN 472.20, conservando la versión reciente de cada venta. Ese resultado local fue publicado y leído de nuevo desde ADLS.
+
+La ampliación remota incorpora workspace Databricks Premium, Unity Catalog, Access Connector con identidad administrada y un notebook que lee Bronze y escribe Delta en `SalesDelta`. ADF ejecutó el notebook y verificó la relectura de cuatro ventas por PEN 472.20. Key Vault aporta la política de validación y una SAS de demostración de solo lectura con vencimiento de una hora: otro linked service recuperó esa credencial y permitió a ADF comprobar un archivo privado real de 68 bytes. El clúster quedó TERMINATED. El detalle está en `04-retail-andes/RESULTADO.md`.
+
+**Uso:** los scripts `Run-Pipeline.ps1`, `Inspect-Run.ps1`, `Build-Silver.ps1` y `Publish-Silver.ps1` cubren el flujo ya probado. Los de Databricks amplían la ejecución remota. No repetir Initialize esperando reiniciar el historial: está diseñado para ser idempotente.
+
+**Límite didáctico:** el watermark no captura borrados ni garantiza consistencia con escritores concurrentes; una solución productiva requiere revisar CDC/Change Tracking y transacciones tardías.
+
 ## Alcance
 
 Ingesta SQL → Azure Data Factory → ADLS Gen2 en Parquet, con metadatos, cargas completas e incrementales y transformación Silver con PySpark. Usa datos de ejemplo y ventas ficticias.

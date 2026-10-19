@@ -1,5 +1,19 @@
 # Cómputo, web y contenedores
 
+## Descripción de lo realizado
+
+**Objetivo:** construir y desplegar una aplicación distribuida sencilla.
+
+Una web .NET 10 sirve el catálogo y consulta una API FastAPI con tres productos ficticios en PEN. Docker Compose permite ejecutar ambos componentes localmente. En Azure, la web usa App Service F1 y la API usa Container Apps, que descarga su imagen desde un ACR privado mediante identidad administrada. Se configuró escalado mínimo cero para la API.
+
+Se añadió una VM Windows Server 2022 en Central US, sin IP pública ni puertos entrantes abiertos. Su sistema operativo se comprobó con Run Command y la VM se desasignó después de la prueba. Las VM Linux se cubren en el proyecto 03.
+
+La publicación desde GitHub Actions compila .NET, autentica mediante OIDC, despliega App Service y comprueba salud y catálogo. Su identidad tiene permiso Website Contributor solo sobre esa web. No utiliza un secreto de publicación permanente.
+
+**Uso:** `02-computo-web-contenedores/scripts/Test-Local.ps1` y `Test-Azure.ps1`. Local: web 18080, API 18000. Azure: `https://web-leadutp02-jmas5j6rizpu4.azurewebsites.net`.
+
+**Pendiente externo:** no hay dominio propio. Se mantiene el dominio de Azure; un dominio personalizado exige disponer del dominio, controlar DNS y comprobar compatibilidad del plan.
+
 Web desplegada y probada: https://web-leadutp02-jmas5j6rizpu4.azurewebsites.net
 
 API desplegada y probada: https://ca-leadutp02-api.whitesea-c86c9ca6.brazilsouth.azurecontainerapps.io/docs

@@ -1,5 +1,17 @@
 # Proyecto 06: infraestructura como código
 
+## Descripción de lo realizado
+
+**Objetivo:** desplegar una plataforma repetible y verificarla con CI/CD.
+
+Bicep organiza recursos, módulos propios versionados en el ACR y un módulo AVM para Log Analytics. Despliega Container Apps, identidad, Key Vault, Application Insights, workspace y presupuesto. GitHub Actions usa OIDC para compilar, revisar what-if, desplegar y verificar la API.
+
+La ampliación incorpora una imagen propia instrumentada con OpenTelemetry. Al iniciar, la API lee `catalog-label` de Key Vault mediante su identidad administrada; no devuelve el valor del secreto. Las peticiones y trazas llegan a Application Insights y los registros de consola a Log Analytics. Se fijó la imagen por digest para evitar cambios accidentales de etiqueta.
+
+**Uso:** `06-infraestructura-bicep/scripts/Test-Azure.ps1`, `Inspect-Logs.ps1` e `Inspect-Telemetry.ps1`. La API es `https://ca-lead06-api.kindwave-4a2cdf0a.brazilsouth.azurecontainerapps.io`.
+
+La integración de logs del entorno Express usa internamente una clave de workspace resuelta por ARM; las aplicaciones se autentican con identidad administrada para Key Vault. No se debe describir toda la plataforma como completamente libre de claves.
+
 Este laboratorio despliega su propio grupo `rg-leadutp-06-dev` en Brazil South. Reutiliza el ACR del proyecto 02 y publica su propia imagen instrumentada; el registro compartido debe conservarse.
 
 ## Componentes

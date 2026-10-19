@@ -1,5 +1,15 @@
 # Configuración, costos y Azure SQL
 
+## Descripción de lo realizado
+
+**Objetivo:** preparar una suscripción, organizar sus recursos y crear una base de datos accesible con una identidad de Microsoft Entra.
+
+Se creó el grupo `rg-leadutp-01-dev`, un presupuesto mensual de USD 10 con alertas al 80% y 100%, y una base Azure SQL con la muestra AdventureWorksLT. La oferta gratuita está habilitada y configurada para pausar al agotar su límite. La autenticación usa Azure CLI y Entra, sin contraseñas SQL en archivos.
+
+La conexión cifrada y consultas reales verificaron clientes y productos. Las reglas temporales de firewall se retiraron al terminar. La base también sirve de origen para Retail Andes.
+
+**Aprendizaje:** grupos de recursos, presupuestos, Azure CLI, Bicep, autenticación y consultas SQL. Para repetir la verificación, consultar `01-configuracion-costos-sql/scripts/Verify-Sql.ps1` y el README de esa carpeta.
+
 ## Objetivo
 
 Crear un grupo de recursos, un servidor lógico SQL y una base AdventureWorksLT mediante Bicep, con presupuesto configurable.

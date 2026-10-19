@@ -1,5 +1,15 @@
 # Redes y seguridad
 
+## Descripción de lo realizado
+
+**Objetivo:** entender la conectividad entre servidores y restringirla con reglas explícitas.
+
+Se desplegó una VNet con dos subredes y dos VM Ubuntu 24.04 ARM64 en Central US. Cada subred tiene un NSG. VM01 expone el servicio de demostración y se comunica con VM02 por IP privada. SSH queda limitado y se bloquea el tráfico no autorizado entre subredes.
+
+Las pruebas verificaron HTTP real entre VM y desde el PC, acceso SSH con clave, bloqueos TCP y decisiones Allow/Deny con Network Watcher. Que el puerto 443 esté permitido en una regla no equivale a haber instalado y probado HTTPS en la VM.
+
+**Uso:** `03-redes-seguridad/scripts/Test-Network.ps1`; revisar antes `Set-PowerState.ps1` y el README. Las VM quedaron desasignadas; volver a ejecutar las pruebas puede requerir iniciarlas y genera consumo.
+
 ## Diseño del laboratorio
 
 VNet01: `10.30.0.0/16`, con dos subredes:

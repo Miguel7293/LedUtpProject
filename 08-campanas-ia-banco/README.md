@@ -1,5 +1,17 @@
 # Banco ABC: campañas con IA
 
+## Descripción de lo realizado
+
+**Objetivo:** seleccionar campañas afines y generar comunicaciones con una guía de marca recuperada de PDF.
+
+FastAPI expone perfiles ficticios y un endpoint de generación. LangGraph encadena selección, recuperación de conocimiento, redacción y validación. El matching usa reglas explicables de intereses y categorías de consumo. El RAG extrae texto del PDF y recupera fragmentos por coincidencia léxica, con página y fuente; no necesita un servicio vectorial.
+
+El modo local usa plantillas. El modo Azure llama realmente al despliegue `banco-abc-texto` de gpt-4.1-mini en Foundry y exige salida JSON estructurada. Produce asunto, preheader, cuerpo, SMS, pop-up y prompt de imagen en inglés para cada campaña. Las condiciones se toman del catálogo. Los prompts no se envían a generadores de imágenes.
+
+Once pruebas verificaron el flujo y sus restricciones; también se realizaron llamadas reales al modelo. Los perfiles incluyen DNI ficticio, rango de edad, estado civil e hijos sintéticos. El matching incorpora una afinidad educativa limitada a etapa de estudio o familiar; DNI y estado civil quedan excluidos del ranking y del modelo. Los resultados son `needs_human_review`. No se envían mensajes ni se toman decisiones de crédito.
+
+**Uso:** `08-campanas-ia-banco/scripts/Start-Local.ps1`, abrir `http://localhost:18090/docs`. Para consumo del modelo remoto, reiniciar con `-Azure` y usar `mode: "azure"`. La API permanece local, sin autenticación para publicación pública.
+
 Implementado con FastAPI, LangGraph y modelo real Azure. Datos y marca ficticios; solo genera borradores para revisión humana.
 
 ## Ejecutar y probar

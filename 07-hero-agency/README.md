@@ -1,5 +1,17 @@
 # Hero Agency
 
+## Descripción de lo realizado
+
+**Objetivo:** llevar una demo de votación desde código hasta staging y producción con controles de ramas.
+
+La aplicación usa Node.js 24 y Express 5. Localmente guarda votos en memoria; en Azure los conserva en Table Storage. Staging y producción usan tablas e identidades diferentes. Las cookies tienen identificadores opacos y solo su hash se guarda como clave. Repetir un voto es idempotente y cambiarlo devuelve 409. No es un sistema electoral: borrar cookies permite volver a votar.
+
+Azure Pipelines ejecuta cinco etapas: Build, Test, Policies, Staging y Production. La promoción usa el mismo digest de imagen y verifica disponibilidad. Se comprobó que los votos persistieran tras el despliegue. La validación automática del PR también aprobó, sin desplegar desde la rama del PR.
+
+**Uso:** `07-hero-agency/scripts/Test-Local.ps1`, `Test-Azure.ps1` e `Inspect-Pipeline.ps1`. Local: puerto 18070. La opción `-Vote` de la prueba remota agrega votos ficticios.
+
+**Pendiente humano:** aprobar y fusionar el PR de Azure Repos exige otro revisor. La política excluye al autor; no se realizó bypass ni se simuló una aprobación.
+
 Demo de votación Node.js 24 / Express 5, con interfaz web, Docker y Azure Pipelines en cinco etapas. Cada entorno usa su propia tabla privada de Azure Storage y una identidad administrada con permisos solo en esa tabla. No hay claves de Storage en el código.
 
 ## Ejecutar y probar
