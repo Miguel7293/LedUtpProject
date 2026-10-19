@@ -1,0 +1,40 @@
+name: Web 02 - Build deploy verify
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, codex/infraestructura-06]
+    paths: ['02-computo-web-contenedores/web/**', '.github/workflows/web02.yml']
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: web02-deployment
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: azure-web02
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet publish 02-computo-web-contenedores/web -c Release -o publish
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+          package: publish
+      - name: Verify deployed web
+        shell: pwsh
+        run: |
+          $base = 'https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net'
+          $health = Invoke-RestMethod "$base/health" -TimeoutSec 120
+          if ($health.status -ne 'ok') { throw 'Health failed' }
+          $catalog = Invoke-RestMethod "$base/api/products" -TimeoutSec 120
+          if ($catalog.items.Count -ne 3 -or $catalog.currency -ne 'PEN') { throw 'Catalog failed' }
+          Write-Output 'WEB02_GITHUB_DEPLOY_PASS'
