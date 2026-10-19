@@ -1,48 +1,33 @@
 # Evidencias del proyecto 06
 
-## Preparación verificada
+## Infraestructura
 
-- Compilación Bicep aprobada; módulo AVM `operational-insights/workspace:0.11.1` restaurado.
-- Módulos propios `observability:1.0.2` y `security:1.0.0` publicados con fuentes en `acrleadutpjmas5j6rizpu4.azurecr.io/bicep/leadutp/`.
-- What-if revisado: creación del grupo 06 y sus recursos; asignación AcrPull en el ACR del grupo 02. Esa asignación aparece como no analizable en what-if porque depende del principalId de la identidad nueva.
-- Sintaxis de scripts PowerShell validada.
-
-## Pendientes explícitos
-
-- Vincular repositorio GitHub, identidad OIDC, permisos y variables; ejecutar el workflow real. La carpeta contiene el workflow manual, pero aún no existe evidencia de un run en GitHub.
-- Instrumentar la API para Application Insights y consumir secretos desde Key Vault si se quiere demostrar integración de aplicación. Los componentes de infraestructura por sí solos no prueban esas funcionalidades.
-- La API reutiliza la etiqueta `v1` del proyecto 02; para producción fijar digest y establecer política de actualización.
-- Revisar saldo y fecha de expiración de Azure for Students.
-
-
-## Despliegue verificado
-
-- Despliegue de suscripción `leadutp-06`: Succeeded.
-- Grupo `rg-leadutp-06-dev`, Brazil South.
+- Grupo independiente: `rg-leadutp-06-dev`, Brazil South.
 - API: https://ca-lead06-api.kindwave-4a2cdf0a.brazilsouth.azurecontainerapps.io
-- `Test-Azure.ps1`: BICEP_06_TEST_PASS, HTTP 200, identidad administrada, minReplicas=0, retención 30 días y cuota 1 GB/día.
 - Recursos: `log-lead06`, `appi-lead06`, `kv-lead06-rs67koo3gr6tg`, `id-lead06`, `cae-lead06`, `ca-lead06-api`.
-- Presupuesto `budget-leadutp-06`, mensual 10 unidades, avisos 80/100%.
-- La versión observability 1.0.1 usa el output de AVM para resolver la dependencia de creación del workspace; la versión 1.0.0 quedó publicada como antecedente y no se consume.
-- Repositorio elegido: Miguel7293/LedUtpProject. GitHub CLI instalado; la autenticación del usuario sigue pendiente. No se ha publicado código ni configurado OIDC aún.
+- Módulos propios con fuentes en ACR: `bicep/leadutp/observability:1.0.2` y `bicep/leadutp/security:1.0.0`. Versiones previas conservadas sin sobrescribir.
+- AVM Log Analytics `0.11.1`, retención 30 días y cuota de ingesta 1 GB/día.
+- Despliegue local `leadutp-06`: Succeeded. Test-Azure.ps1: BICEP_06_TEST_PASS (HTTP 200, managed identity, minReplicas=0, límites de logs y destino correcto).
+- Catálogo real de la API verificado: tres productos ficticios, moneda PEN, entorno azure-bicep-06.
+- Presupuesto `budget-leadutp-06`: mensual 10 unidades de la moneda de facturación, avisos 80/100%; no detiene recursos.
 
+## GitHub
 
-## Publicación preparada
+- Repositorio: [Miguel7293/LedUtpProject](https://github.com/Miguel7293/LedUtpProject).
+- Rama `codex/infraestructura-06` publicada; [PR #1](https://github.com/Miguel7293/LedUtpProject/pull/1) en borrador, sin fusionar main.
+- GitHub CLI autenticado; identidad Azure `id-lead06-github` con federación OIDC para el environment azure-lab.
+- Client ID: `28840f10-1b88-49cc-beb2-a16d25b37017` (identificador público, no credencial).
+- El subject usa los IDs inmutables reales del repositorio/propietario. Se corrigió la primera ejecución que esperaba el formato antiguo.
+- Environment restringido a main y codex/infraestructura-06; sin revisores automáticos. Variables de identidad y suscripción; destinatario de alertas como secreto AZURE_ALERT_EMAIL.
+- [Validación Actions 39192558401](https://github.com/Miguel7293/LedUtpProject/actions/runs/39192558401): success. Login OIDC, restauración de módulos privados, compilación y what-if aprobados.
+- [Despliegue manual Actions 39192677684](https://github.com/Miguel7293/LedUtpProject/actions/runs/39192677684): success con deploy=true: login OIDC, módulos privados, compilación, what-if, despliegue y Test-Azure.ps1 aprobados. Código validado en commit 1fe3692; los cambios posteriores son documentación.
 
-La rama local `codex/infraestructura-06` se preparó en `.local/repository` a partir del único README remoto, sin modificar main. El workflow se ubicará en la raíz `.github/workflows/infra06.yml`, con la carpeta del laboratorio como directorio de trabajo.
+## Límites y pendientes
 
-Para GitHub CLI, ejecutar en una terminal del usuario:
-
-```powershell
-& 'C:/Program Files/GitHub CLI/gh.exe' auth login --hostname github.com --git-protocol https --web
-```
-
-Después se podrá configurar OIDC con `scripts/Connect-GitHub.ps1` y publicar la rama. El push ejecutará solo compilación y what-if; el despliegue requiere ejecución manual.
-
-## Configuración final de logs y costos
-
-El entorno Express rechazó el destino azure-monitor durante la validación. La versión final `observability:1.0.2` habilita autenticación local exclusivamente en el workspace de este laboratorio para la integración nativa Log Analytics. La clave se resuelve en ARM; no se imprime ni se exporta al repositorio. Las versiones anteriores de los módulos permanecen en el ACR y no se sobrescribieron.
-
-El último despliegue y Test-Azure.ps1 terminaron correctamente. La prueba confirma además que el customerId del destino de logs coincide con el workspace. El what-if posterior muestra diferencias de propiedades predeterminadas/referencias dinámicas de Azure; no se interpreta como un diff vacío ni se declara idempotencia totalmente demostrada.
-
-La configuración final de logs está aplicada, pero la última consulta todavía no encontró tablas en el workspace. La ingesta efectiva permanece pendiente de confirmación; no confundir la configuración de destino aprobada con evidencia de logs recibidos.
+- La última consulta a Log Analytics no encontró tablas: la recepción efectiva de logs sigue sin confirmarse. Test-Azure verifica configuración, no recepción de eventos.
+- Express rechazó azure-monitor como destino. La integración Log Analytics usa clave del workspace y requiere disableLocalAuth=false en este laboratorio; ARM resuelve la clave sin exportarla.
+- Application Insights y Key Vault están aprovisionados; la imagen de API no tiene instrumentación de trazas ni consume secretos. No se afirma haber probado esas integraciones de aplicación.
+- La imagen reutiliza la etiqueta v1 del proyecto 02; fijar digest para producción.
+- What-if muestra diferencias de valores predeterminados/referencias dinámicas de Azure y una asignación AcrPull no analizable antes de resolver principalId. No se declara un diff vacío.
+- Saldo y fecha de expiración de Azure for Students todavía sin verificar.
+- Retirar al finalizar el laboratorio: grupo 06, asignaciones de sus identidades en ACR/suscripción, federación y rol propio si ya no se usa. No eliminar el ACR compartido del proyecto 02.

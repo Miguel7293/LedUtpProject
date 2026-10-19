@@ -30,16 +30,23 @@ La imagen reutilizada no tiene instrumentación de Application Insights ni consu
 
 ## GitHub Actions
 
-La plantilla `.github/workflows/infra.yml` se copia a `.github/workflows/infra06.yml` en la raíz de `Miguel7293/LedUtpProject`. El código permanece en la carpeta `06-infraestructura-bicep`; el workflow ya configura ese directorio de trabajo.
+Repositorio: [Miguel7293/LedUtpProject](https://github.com/Miguel7293/LedUtpProject). Rama publicada: `codex/infraestructura-06`. [PR #1](https://github.com/Miguel7293/LedUtpProject/pull/1), en borrador y sin fusionar.
 
-El workflow compila y ejecuta what-if al publicar cambios en main o codex/infraestructura-06; también admite ejecución manual. Aplica y verifica solo al marcar `deploy` en una ejecución manual. Usa OIDC de `azure/login`, sin contraseñas de servicio. No se ha vinculado ni ejecutado en GitHub: el repositorio autorizado es `Miguel7293/LedUtpProject` y falta completar el inicio de sesión de GitHub.
+La plantilla `.github/workflows/infra.yml` se copia a `.github/workflows/infra06.yml` en la raíz del repositorio. El código permanece en la carpeta `06-infraestructura-bicep`, que el workflow usa como directorio de trabajo.
 
-Antes de ejecutarlo:
+El push en main o codex/infraestructura-06 compila y ejecuta what-if. La ejecución manual permite marcar `deploy` para aplicar infraestructura y verificar HTTP/configuración. La validación real de OIDC, descarga de módulos privados, compilación y what-if terminó correctamente en [Actions](https://github.com/Miguel7293/LedUtpProject/actions/runs/39192558401). Consultar RESULTADO.md para la evidencia del despliegue manual.
 
-1. Crear una identidad de automatización y una credencial federada con subject exacto `repo:PROPIETARIO/REPOSITORIO:environment:azure-lab` y audience `api://AzureADTokenExchange`.
-2. Crear el environment `azure-lab`, configurar revisores de despliegue y restringir la rama autorizada.
-3. Configurar variables `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_ALERT_EMAIL` en ese environment.
-4. Asignar permisos necesarios para despliegues de suscripción/creación del grupo, Contributor y gestión de asignaciones RBAC solo en el grupo 06, y lectura de artefactos/gestión de AcrPull solo en el ACR compartido. No otorgar Owner de suscripción por comodidad. Estos permisos y la federación aún no se han creado. `scripts/Connect-GitHub.ps1` prepara la identidad, la federación y las variables una vez autenticado en GitHub. Restringe el environment a main y codex/infraestructura-06; no configura revisores automáticamente.
+La identidad `id-lead06-github` usa federación OIDC sin contraseña. El subject exacto contiene IDs inmutables: `repo:Miguel7293@114840612/LedUtpProject@1425027654:environment:azure-lab`. Issuer: `https://token.actions.githubusercontent.com`; audience: `api://AzureADTokenExchange`.
+
+El environment azure-lab permite main y codex/infraestructura-06. Tiene variables AZURE_CLIENT_ID, AZURE_TENANT_ID y AZURE_SUBSCRIPTION_ID, y el secreto AZURE_ALERT_EMAIL para ocultar el destinatario en los logs. No se configuraron revisores automáticos del environment.
+
+Permisos de la identidad:
+
+- Contributor y Role Based Access Control Administrator en el grupo 06.
+- AcrPull y Role Based Access Control Administrator solo en el ACR compartido.
+- Rol propio LeadUTP06 Subscription Deployment: operaciones de despliegues ARM en la suscripción; no concede escritura de recursos de otros grupos.
+
+`scripts/Connect-GitHub.ps1` reproduce esta configuración para el repositorio autorizado con una sesión administrativa de Azure y una sesión GitHub. No se otorga Owner de suscripción a Actions. Al terminar el curso, retirar también la federación, las asignaciones de esta identidad en el ACR y la suscripción y el rol propio si ya no se usa.
 
 ## Costos y limpieza
 
@@ -55,10 +62,6 @@ No eliminar el grupo 02: lo usan otros laboratorios. Al eliminar 06, retirar tam
 
 Fuentes: [AVM Log Analytics](https://github.com/Azure/bicep-registry-modules/tree/main/avm/res/operational-insights/workspace), [registro privado Bicep](https://learn.microsoft.com/azure/azure-resource-manager/bicep/private-module-registry).
 
-
-
-
 La integración de logs del entorno Express requiere autenticación por clave en el workspace (disableLocalAuth=false). La clave se consulta dentro de ARM y no se exporta. Este tipo de entorno rechazó el destino alternativo azure-monitor en su validación de Azure.
-
 
 En otro equipo, indicar -ContactEmail al ejecutar Deploy.ps1, o definir AZURE_ALERT_EMAIL. En este equipo el destinatario autorizado se guarda en .local/settings.json, excluido de Git.
