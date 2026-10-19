@@ -1,5 +1,11 @@
 # Guía de los proyectos LEAD UTP
 
+## Retiro de recursos de Azure — 19 de octubre de 2026
+
+El propietario autorizó eliminar los recursos de Azure de este laboratorio para detener futuros cargos. Se verificó la eliminación de los ocho grupos y del grupo administrado de Databricks; las pruebas y direcciones descritas abajo documentan el funcionamiento anterior y no garantizan que los servicios sigan disponibles. Se conservan código, infraestructura y evidencias. Los despliegues de GitHub Actions y Azure Pipelines se deshabilitaron para impedir la recreación automática.
+
+Los respaldos de archivos y datos de demostración se guardan únicamente en `.local/retirada-2026-10-19/` en la raíz del workspace, excluida de Git. No es un respaldo completo de máquinas, imágenes o base SQL: se conservan scripts de inicialización, datos Bronze/Silver, documentos, reportes y votos de demostración. Las contraseñas, secretos e identidades administradas no se restauran desde esos respaldos. Para volver a publicar, revisar los scripts y los costos antes de desplegar.
+
 Este portafolio reúne ocho laboratorios de Azure y desarrollo de aplicaciones. Cada proyecto tiene su propia carpeta, código, infraestructura, scripts de operación y un `RESULTADO.md` con las comprobaciones realizadas. Los datos comerciales, votos, clientes y campañas son de demostración.
 
 La solución combina trabajo local con recursos reales de Azure. Una plantilla que compila no demuestra que un servicio funcione: los informes distinguen preparación, despliegue y prueba de funcionamiento. Los nombres y resultados corresponden al laboratorio de octubre de 2026; el estado vivo puede cambiar después.
@@ -100,15 +106,7 @@ Once pruebas verificaron el flujo y sus restricciones; también se realizaron ll
 
 **Uso:** `08-campanas-ia-banco/scripts/Start-Local.ps1`, abrir `http://localhost:18090/docs`. Para consumo del modelo remoto, reiniciar con `-Azure` y usar `mode: "azure"`. La API permanece local, sin autenticación para publicación pública.
 
-## Cómo recorrer el portafolio
-
-1. Leer esta guía y el README del proyecto elegido.
-2. Revisar su `RESULTADO.md` para conocer pruebas, recursos y límites.
-3. Activar herramientas con `. ./scripts/Enter-DevEnvironment.ps1`.
-4. Verificar la suscripción seleccionada con `az account show`.
-5. Ejecutar primero consultas o pruebas; revisar cada script antes de aplicar cambios o agregar datos.
-
-Cada carpeta mantiene su entorno y dependencias. `.local`, `.venv`, claves, certificados privados y configuraciones personales se excluyen de Git. Un ejemplo de configuración no sustituye el inicio de sesión de Azure.
+ta mantiene su entorno y dependencias. `.local`, `.venv`, claves, certificados privados y configuraciones personales se excluyen de Git. Un ejemplo de configuración no sustituye el inicio de sesión de Azure.
 
 ## Dependencias entre proyectos
 
@@ -122,11 +120,3 @@ flowchart LR
 ```
 
 Las carpetas están separadas, pero algunos recursos se reutilizan. No eliminar el ACR 02 mientras 06/07 lo usen, ni SQL 01 mientras 04 lo necesite. Antes de retirar un grupo, revisar recursos compartidos, identidades, permisos y copias de evidencia.
-
-## Costos y cierre
-
-Los presupuestos generan avisos; no apagan recursos ni garantizan un límite global. El usuario observó saldo sin cambios, pero no se ha confirmado su importe actual ni vencimiento. La consulta mensual de Cost Management respondió sin filas de consumo, tras una limitación temporal 429; una respuesta sin filas no demuestra gasto cero. Se confirmó oferta AzureForStudents y spendingLimit On. Discos e IP públicas pueden seguir cobrando con VM desasignadas. ACR, Storage, monitorización, Logic Apps, ADF, Databricks y tokens de IA pueden generar cargos. [Microsoft explica los retrasos y límites de los datos de costos](https://learn.microsoft.com/en-us/azure/cost-management-billing/costs/understand-cost-mgt-data).
-
-Los trabajos Databricks deben terminarse al finalizar: la terminación automática es una protección adicional, no reemplaza comprobar el estado. El workspace agrega recursos administrados, incluido NAT Gateway, con posibles costos incluso sin clúster activo. Se añadió un presupuesto filtrado a ambos grupos de Retail Andes. Consultar el crédito en Educación y retirar únicamente recursos que ya no se necesiten; las APIs de Cost Management pueden tener limitaciones de oferta y disponibilidad de datos.
-
-El cierre completo también depende de un dominio propio si se desea ese ejercicio, la confirmación del correo de alertas y la revisión humana del PR. Los informes de cada carpeta son la fuente de verdad para el estado técnico de cada comprobación.

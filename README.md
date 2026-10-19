@@ -1,5 +1,11 @@
 # Laboratorios y proyectos LEAD UTP
 
+## Retiro de recursos de Azure — 19 de octubre de 2026
+
+El propietario autorizó eliminar los recursos de Azure de este laboratorio para detener futuros cargos. Se verificó la eliminación de los ocho grupos y del grupo administrado de Databricks; las pruebas y direcciones descritas abajo documentan el funcionamiento anterior y no garantizan que los servicios sigan disponibles. Se conservan código, infraestructura y evidencias. Los despliegues de GitHub Actions y Azure Pipelines se deshabilitaron para impedir la recreación automática.
+
+Los respaldos de archivos y datos de demostración se guardan únicamente en `.local/retirada-2026-10-19/` en la raíz del workspace, excluida de Git. No es un respaldo completo de máquinas, imágenes o base SQL: se conservan scripts de inicialización, datos Bronze/Silver, documentos, reportes y votos de demostración. Las contraseñas, secretos e identidades administradas no se restauran desde esos respaldos. Para volver a publicar, revisar los scripts y los costos antes de desplegar.
+
 Cada proyecto vive en una carpeta independiente. Algunos laboratorios desplegados usan recursos de pago; consultar RESULTADO.md y las instrucciones de costos y limpieza de cada carpeta.
 
 La descripción completa de objetivos, implementación, ejecución, verificaciones, dependencias y costos está en [GUIA-PROYECTOS.md](GUIA-PROYECTOS.md). Cada carpeta incluye además su README técnico y su informe de evidencias.
@@ -38,5 +44,3 @@ La descripción completa de objetivos, implementación, ejecución, verificacion
 
 Ejecutar `./scripts/Test-Environment.ps1` en PowerShell para revisar herramientas.
 El estado inicial de cada proyecto está en su README.
-
-Antes del primer despliegue: iniciar sesión en Azure, seleccionar explícitamente la suscripción Students y verificar saldo, permisos, región y cuotas. Los presupuestos generan alertas; no detienen los recursos.

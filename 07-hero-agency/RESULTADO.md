@@ -1,5 +1,11 @@
 # Evidencias de Hero Agency
 
+## Retiro de recursos de Azure — 19 de octubre de 2026
+
+El propietario autorizó eliminar los recursos de Azure de este laboratorio para detener futuros cargos. Se verificó la eliminación de su grupo de recursos y de todos los recursos del laboratorio; las pruebas y direcciones descritas abajo documentan el funcionamiento anterior y no garantizan que los servicios sigan disponibles. Se conservan código, infraestructura y evidencias. Los despliegues de GitHub Actions y Azure Pipelines se deshabilitaron para impedir la recreación automática.
+
+Los respaldos de archivos y datos de demostración se guardan únicamente en `.local/retirada-2026-10-19/` en la raíz del workspace, excluida de Git. No es un respaldo completo de máquinas, imágenes o base SQL: se conservan scripts de inicialización, datos Bronze/Silver, documentos, reportes y votos de demostración. Las contraseñas, secretos e identidades administradas no se restauran desde esos respaldos. Para volver a publicar, revisar los scripts y los costos antes de desplegar.
+
 - Cinco pruebas automatizadas aprobadas en Docker con Node.js 24.22.0.
 - Prueba HTTP local aprobada: creación, repetición idempotente y cambio denegado; interfaz revisada visualmente.
 - Grupo rg-leadutp-07-dev y despliegue hero07 Succeeded.

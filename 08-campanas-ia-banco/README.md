@@ -1,5 +1,11 @@
 # Banco ABC: campañas con IA
 
+## Retiro de recursos de Azure — 19 de octubre de 2026
+
+El propietario autorizó eliminar los recursos de Azure de este laboratorio para detener futuros cargos. Se verificó la eliminación de su grupo de recursos y de todos los recursos del laboratorio; las pruebas y direcciones descritas abajo documentan el funcionamiento anterior y no garantizan que los servicios sigan disponibles. Se conservan código, infraestructura y evidencias. Los despliegues de GitHub Actions y Azure Pipelines se deshabilitaron para impedir la recreación automática.
+
+Los respaldos de archivos y datos de demostración se guardan únicamente en `.local/retirada-2026-10-19/` en la raíz del workspace, excluida de Git. No es un respaldo completo de máquinas, imágenes o base SQL: se conservan scripts de inicialización, datos Bronze/Silver, documentos, reportes y votos de demostración. Las contraseñas, secretos e identidades administradas no se restauran desde esos respaldos. Para volver a publicar, revisar los scripts y los costos antes de desplegar.
+
 ## Descripción de lo realizado
 
 **Objetivo:** seleccionar campañas afines y generar comunicaciones con una guía de marca recuperada de PDF.
@@ -47,21 +53,9 @@ Para retirar solo el modelo: `az cognitiveservices account deployment delete -g 
 
 Referencia de integración: [OpenAI Docs: salidas estructuradas](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=chat).
 
-## Crear el proyecto de Microsoft Foundry
 
-1. Abrir https://ai.azure.com con la cuenta de Azure y seleccionar la suscripción **Azure for Students**. La interfaz puede mostrar Microsoft Foundry o Azure AI Foundry.
-2. Seleccionar **Create a new project** y usar `banco-abc`.
-3. En **Advanced options**, usar un grupo independiente `rg-leadutp-08-dev`. Probar `East US 2` si está disponible para este recurso y la política de la suscripción lo permite.
-4. Crear el proyecto. En **Build > Models > Deploy > Deploy a base model**, revisar los modelos disponibles, su precio y la cuota asignable antes de desplegar.
-5. Elegir un modelo de texto pequeño disponible, con la capacidad mínima permitida para el laboratorio. Usar el nombre de despliegue `banco-abc-texto`. La disponibilidad y la cuota dependen de la suscripción, región y modelo; no están garantizadas por Azure for Students.
-6. Copiar el **project endpoint** de la pantalla de bienvenida y el nombre del despliegue. Son datos de configuración, no claves. No compartir tokens ni API keys.
-
-Si aparece `Insufficient quota`, registrar modelo, región, tipo de despliegue y mensaje completo. No convertir la suscripción a pago para resolverlo sin revisar primero las alternativas.
-
-## Comprobación del entorno (19 de octubre de 2026)
+## Comprobación del entorno 
 
 - Recurso, proyecto y despliegue Succeeded.
 - Dos generaciones reales completadas; última validada con tres campañas.
 - Once pruebas automatizadas aprobadas, incluida afinidad demográfica sintética y exclusión de identificadores. Ver RESULTADO.md.
-
-Referencia oficial: https://learn.microsoft.com/en-us/azure/foundry/tutorials/quickstart-create-foundry-resources
