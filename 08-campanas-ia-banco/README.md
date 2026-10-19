@@ -54,7 +54,7 @@ Para retirar solo el modelo: `az cognitiveservices account deployment delete -g 
 Referencia de integración: [OpenAI Docs: salidas estructuradas](https://developers.openai.com/api/docs/guides/structured-outputs?api-mode=chat).
 
 
-## Comprobación del entorno 
+## Comprobación del entorno
 
 - Recurso, proyecto y despliegue Succeeded.
 - Dos generaciones reales completadas; última validada con tres campañas.
